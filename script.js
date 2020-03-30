@@ -14,19 +14,29 @@ let database = firebase.database();
 
 //Button for adding buses
 $("#add-bus-btn").on("click", function (event) {
-    event.preventDefault();
-
 
     let busName = $("#name-input").val().trim();
     let busDestination = $("#destination-input").val().trim();
-    let bustTime = moment($("#time-input").val().trim(), "HH/MM").format("X");
+    let busTime = moment($("#time-input").val().trim(), "HH:mm").format("X");
     let busFrequency = $("#frequency-input").val().trim();
+    let minutesAway;
+
+    if (!/[a-zA-Z][a-zA-Z ]+/.test(busName)) {
+        alert('Bus Name needs to be text.');
+        return;
+
+    }
+
+    if (!/[0-9]/.test(busFrequency)) {
+        alert('Frequency must be a number.');
+        return;
+    }
 
     //Creates local "temporary" object for holding bus data
     let newBus = {
         name: busName,
         destination: busDestination,
-        time: bustTime,
+        time: busTime,
         frequency: busFrequency,
     };
 
@@ -50,24 +60,32 @@ database.ref().on("child_added", function (childSnapshot) {
 
     // Store everything into a variable.
     let busName = childSnapshot.val().name;
-    let busDestination = childSnapshot.val().role;
-    let bustTime = childSnapshot.val().start;
-    let busFrequency = childSnapshot.val().rate;
+    let busDestination = childSnapshot.val().destination;
+    let busTime = childSnapshot.val().time;
+    let busFrequency = childSnapshot.val().frequency;
+    let minutesAway = busTime
 
 
-    // Prettify the employee start
-    let busPrettify = moment.unix(busTime).format("HH/MM");
-
+    // Prettify the busTime
+    // let busPrettify = moment.unix(busTime).format("HH:mm");
+    let formattedBusTime = moment(busTime, "HH:mm");
     // Calculate difference from arrival and departure
+    let currentTime = moment();
+    let pastTime = formattedBusTime.subtract(1, 'years');
+    let initialTime = currentTime.subtract(pastTime, "minutes");
+    let remainder = initialTime % busFrequency;
+    minutesAway = busFrequency - remainder;
     let busminutesRemaining = moment().diff(moment(busTime, "X"), "minutes");
-
+    let updatedBusTime = currentTime.add(minutesAway, 'minutes').format("HH:mm");
     // Create the new row
     let newRow = $("<tr>").append(
         $("<td>").text(busName),
         $("<td>").text(busDestination),
-        $("<td>").text(busTime),
         $("<td>").text(busFrequency),
+        $("<td>").text(updatedBusTime),
+        $("<td>").text(minutesAway)
     );
+    console.log(newRow);
 
     $("#bus-table > tbody").append(newRow);
 });
