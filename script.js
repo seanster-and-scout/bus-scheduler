@@ -44,7 +44,7 @@ $("#add-bus-btn").on("click", function (event) {
     database.ref().push(newBus);
 
     // Logs everything to console
-    console.log(newBus);
+    console.log('new by', newBus);
 
     alert("Bus successfully added");
 
